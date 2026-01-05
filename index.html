@@ -34,18 +34,15 @@
         .total-timer { font-size: 4rem; font-weight: bold; color: var(--primary); line-height: 1; }
         .scroll-content { flex-grow: 1; overflow-y: auto; padding: 20px; -webkit-overflow-scrolling: touch; }
         
-        /* グリッドレイアウトの設定 */
+        /* グリッドレイアウト */
         .timer-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 20px; }
         .analysis-grid, .history-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
 
-        /* スマホ向けレスポンシブ設定 (追加部分) */
+        /* スマホ向けレスポンシブ */
         @media screen and (max-width: 768px) {
-            .analysis-grid, .history-grid {
-                grid-template-columns: 1fr; /* 1列に強制変更 */
-            }
+            .analysis-grid, .history-grid { grid-template-columns: 1fr; }
             .total-timer { font-size: 3.2rem; }
             .timer-grid { grid-template-columns: 1fr; }
-            .card { padding: 15px; }
         }
 
         .question-card { position: relative; background: white; padding: 20px; border-radius: 15px; border: 1px solid #ddd; transition: 0.3s; }
@@ -60,12 +57,12 @@
         .btn-complete { background: var(--warning); color: #333; }
         .mode-btn { flex: 1; padding: 18px; border-radius: 12px; border: 2px solid var(--primary); background: white; font-weight: bold; font-size: 1rem; }
         .mode-btn.active { background: var(--primary); color: white; }
-        .tab { padding: 12px 16px; background: #e5e5ea; border-radius: 20px; border: none; font-size: 1rem; cursor: pointer; margin: 4px; display: inline-block; position: relative; z-index: 5; }
+        .tab { padding: 12px 16px; background: #e5e5ea; border-radius: 20px; border: none; font-size: 1rem; cursor: pointer; margin: 4px; display: inline-block; z-index: 5; }
         .tab.active { background: var(--primary); color: white; }
         .target-box { background: #eef7ff; padding: 15px; border-radius: 12px; margin-bottom: 15px; text-align: center; border: 1px solid var(--primary); }
         .target-box input { width: 80px; font-size: 1.4rem; font-weight: bold; text-align: center; }
         .eff-info { background: #fff9c4; border: 1px solid #fbc02d; padding: 15px; border-radius: 12px; margin-bottom: 20px; font-size: 0.95rem; line-height: 1.6; }
-        .analysis-card { background: var(--bg-success); border-radius: 12px; padding: 18px; margin-bottom: 12px; font-size: 1.05rem; box-shadow: 0 2px 4px rgba(0,0,0,0.05); border: 1px solid #c3e6cb; }
+        .analysis-card { background: var(--bg-success); border-radius: 12px; padding: 18px; margin-bottom: 12px; font-size: 1.05rem; border: 1px solid #c3e6cb; }
         .analysis-card-bad { background: var(--bg-danger); border: 1px solid #f5c6cb; }
         .history-card { position: relative; border-radius: 12px; padding: 15px; margin-bottom: 10px; overflow: hidden; font-size: 0.9rem; border: 1px solid rgba(0,0,0,0.1); }
         .history-sub-label { position: absolute; right: 8px; bottom: -10px; font-size: 3rem; font-weight: 900; opacity: 0.15; font-style: italic; }
@@ -106,12 +103,10 @@
                     <button id="mode-toushi" class="mode-btn active" onclick="setMode('toushi')">通し(70分)</button>
                     <button id="mode-tokutei" class="mode-btn" onclick="setMode('tokutei')">特定単元</button>
                 </div>
-
                 <div id="custom-time-area" class="hidden" style="margin-bottom:20px; padding:15px; background:#eef7ff; border-radius:10px; border:1px solid var(--primary);">
                     演習時間を設定（分）：
                     <input type="number" id="custom-total-time" style="width:80px; font-size:1.3rem; text-align:center;" value="70">
                 </div>
-
                 <p style="color:#d93025; font-weight:bold; margin-bottom:5px;">※各大問、単元は2つまで選択可能です</p>
                 <p id="iibc-note" style="color:#007AFF; font-weight:bold; margin-bottom:15px; display:none;">※自身が解答する大問数と配点を設定してください</p>
                 大問数：<input type="number" id="q-count" style="width:70px; font-size:1.3rem;" value="4" onchange="renderToushiFields()">
@@ -146,12 +141,12 @@
         <div id="view-history" class="hidden">
             <div class="history-grid">
                 <div class="history-col">
-                    <h3 style="text-align:center; background:var(--ia-toushi); color:#333; padding:10px; border-radius:10px;">数学Ⅰ・IA</h3>
+                    <h3 style="text-align:center; background:var(--ia-toushi); padding:10px; border-radius:10px;">数学Ⅰ・IA</h3>
                     <div class="chart-container"><canvas id="chart-IA"></canvas></div>
                     <div id="history-IA-list"></div>
                 </div>
                 <div class="history-col">
-                    <h3 style="text-align:center; background:var(--iibc-toushi); color:#333; padding:10px; border-radius:10px;">数学Ⅱ・B・C</h3>
+                    <h3 style="text-align:center; background:var(--iibc-toushi); padding:10px; border-radius:10px;">数学Ⅱ・B・C</h3>
                     <div class="chart-container"><canvas id="chart-IIBC"></canvas></div>
                     <div id="history-IIBC-list"></div>
                 </div>
@@ -196,12 +191,8 @@
         document.getElementById('mode-toushi').classList.toggle('active', mode === 'toushi'); 
         document.getElementById('mode-tokutei').classList.toggle('active', mode === 'tokutei');
         const customArea = document.getElementById('custom-time-area');
-        if(mode === 'tokutei') {
-            customArea.classList.remove('hidden');
-        } else {
-            customArea.classList.add('hidden');
-            document.getElementById('custom-total-time').value = 70;
-        }
+        if(mode === 'tokutei') customArea.classList.remove('hidden');
+        else { customArea.classList.add('hidden'); document.getElementById('custom-total-time').value = 70; }
     }
 
     function renderToushiFields() {
@@ -263,8 +254,7 @@
     function handleFinish() { clearInterval(mainInterval); const area = document.getElementById('score-inputs-area'); area.innerHTML = ''; timers.forEach((t, i) => { area.innerHTML += `<div style="margin-bottom:15px;"><b>大問${i+1} (${t.name})</b><br>得点: <input type="number" id="s-${i}" style="width:60px;"> / ${t.weight}点</div>`; }); document.getElementById('score-modal').classList.remove('hidden'); }
 
     function finalSave() {
-        let currentTotal = 0;
-        const details = [];
+        let currentTotal = 0; const details = [];
         for(let i=0; i<timers.length; i++){
             const s = parseFloat(document.getElementById(`s-${i}`).value) || 0;
             currentTotal += s;
@@ -280,6 +270,7 @@
         const history = JSON.parse(localStorage.getItem('math_timer_history') || '[]');
         ['IA', 'IIBC'].forEach(subKey => {
             const target = parseFloat(document.getElementById('target-' + subKey).value) || 70;
+            const reqEff = target / 70;
             const content = document.getElementById('analysis-' + subKey + '-content');
             const subData = (subKey === 'IA') ? history.filter(h => h.subject === 'IA' || h.subject === 'I') : history.filter(h => h.subject === 'IIBC');
             if(subData.length === 0) { content.innerHTML = "<p>データなし</p>"; return; }
@@ -295,6 +286,13 @@
             });
             let html = `<div class="rank-title">📉 得点率ワースト</div>`;
             list.sort((a,b) => a.avgRate - b.avgRate).slice(0,3).forEach((d, i) => html += `<div class="analysis-card analysis-card-bad"><b>${i+1}位: ${d.name}</b> (${Math.round(d.avgRate)}%)</div>`);
+            html += `<div class="rank-title">⏱ 効率スコア分析</div>`;
+            html += `<div class="eff-threshold-box"><strong>目標(${target}点)の基準:</strong><br>✅達成: ${reqEff.toFixed(2)} 以上<br>🚨危険: ${(reqEff * 0.85).toFixed(2)} 未満</div>`;
+            list.sort((a,b) => a.eff - b.eff).reverse().forEach(d => {
+                let status = (d.eff < reqEff * 0.85) ? "🚨 危険" : (d.eff < reqEff) ? "⚠️ 警告" : "✅ 達成";
+                let cardClass = (d.eff < reqEff * 0.85) ? "analysis-card analysis-card-bad" : "analysis-card";
+                html += `<div class="${cardClass}"><b>${d.name}</b>: スコア <strong>${d.eff.toFixed(2)}</strong> (${status})</div>`;
+            });
             content.innerHTML = html;
         });
     }
@@ -304,7 +302,7 @@
         ['IA', 'IIBC'].forEach(subKey => {
             const container = document.getElementById('history-' + subKey + '-list');
             const subData = (subKey === 'IA') ? history.filter(h => h.subject === 'IA' || h.subject === 'I') : history.filter(h => h.subject === 'IIBC');
-            container.innerHTML = subData.map(h => `<div class="history-card" style="background:white; margin-bottom:10px; border:1px solid #ddd; padding:10px; border-radius:10px;"><b>${h.date} - ${h.totalScore}点</b></div>`).join('') || "履歴なし";
+            container.innerHTML = subData.map(h => `<div class="history-card" style="background:#fff; border:1px solid #ddd; margin-bottom:10px;"><b>${h.date} - ${h.totalScore}点</b></div>`).join('') || "履歴なし";
         });
     }
 
