@@ -71,7 +71,7 @@
         .modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); display: flex; justify-content: center; align-items: center; z-index: 1000; }
         .modal-content { background: white; padding: 30px; border-radius: 25px; width: 90%; max-height: 85vh; overflow-y: auto; }
         .chart-container { background: white; border-radius: 15px; padding: 15px; margin-bottom: 15px; border: 1px solid #ddd; height: 150px; }
-        .eff-threshold-box { font-size: 0.85rem; color: #555; background: #fffde7; padding: 8px; border-radius: 8px; border: 1px solid #fff59d; margin-bottom: 10px; line-height: 1.4; }
+        .eff-threshold-box { font-size: 0.85rem; color: #555; background: #fffde7; padding: 10px; border-radius: 10px; border: 1px solid #fff59d; margin-bottom: 10px; line-height: 1.5; }
     </style>
 </head>
 <body id="body-bg">
@@ -118,7 +118,10 @@
         <div id="view-analysis" class="hidden">
             <div class="eff-info">
                 <strong>💡 効率スコアとは？</strong><br>
-                1分間あたりに何％の得点を獲得したかを示す指標です（得点率÷時間）。
+                1分間あたりに何％の得点を獲得したかを示す指標です（得点率÷時間）。<br>
+                ✅ <strong>達成：</strong> 目標点に必要な解答ペースを維持できています。<br>
+                ⚠️ <strong>警告：</strong> やや時間がかかりすぎ、他へ影響が出る恐れがあります。<br>
+                🚨 <strong>危険：</strong> 時間をかけすぎ、または得点が低く、目標達成が困難です。
             </div>
             <div id="analysis-content-area" class="analysis-grid">
                 <div class="analysis-col">
@@ -270,7 +273,7 @@
         const history = JSON.parse(localStorage.getItem('math_timer_history') || '[]');
         ['IA', 'IIBC'].forEach(subKey => {
             const target = parseFloat(document.getElementById('target-' + subKey).value) || 70;
-            const reqEff = target / 70;
+            const reqEff = target / 70; 
             const content = document.getElementById('analysis-' + subKey + '-content');
             const subData = (subKey === 'IA') ? history.filter(h => h.subject === 'IA' || h.subject === 'I') : history.filter(h => h.subject === 'IIBC');
             if(subData.length === 0) { content.innerHTML = "<p>データなし</p>"; return; }
@@ -286,8 +289,15 @@
             });
             let html = `<div class="rank-title">📉 得点率ワースト</div>`;
             list.sort((a,b) => a.avgRate - b.avgRate).slice(0,3).forEach((d, i) => html += `<div class="analysis-card analysis-card-bad"><b>${i+1}位: ${d.name}</b> (${Math.round(d.avgRate)}%)</div>`);
+            
             html += `<div class="rank-title">⏱ 効率スコア分析</div>`;
-            html += `<div class="eff-threshold-box"><strong>目標(${target}点)の基準:</strong><br>✅達成: ${reqEff.toFixed(2)} 以上<br>🚨危険: ${(reqEff * 0.85).toFixed(2)} 未満</div>`;
+            html += `<div class="eff-threshold-box">
+                <strong>目標点(${target}点)に基づく判定目安:</strong><br>
+                ✅ <strong>達成:</strong> ${reqEff.toFixed(2)} 以上 (合格圏内)<br>
+                ⚠️ <strong>警告:</strong> ${(reqEff * 0.85).toFixed(2)} ～ ${reqEff.toFixed(2)} (時間注意)<br>
+                🚨 <strong>危険:</strong> ${(reqEff * 0.85).toFixed(2)} 未満 (要改善)
+            </div>`;
+
             list.sort((a,b) => a.eff - b.eff).reverse().forEach(d => {
                 let status = (d.eff < reqEff * 0.85) ? "🚨 危険" : (d.eff < reqEff) ? "⚠️ 警告" : "✅ 達成";
                 let cardClass = (d.eff < reqEff * 0.85) ? "analysis-card analysis-card-bad" : "analysis-card";
@@ -302,7 +312,7 @@
         ['IA', 'IIBC'].forEach(subKey => {
             const container = document.getElementById('history-' + subKey + '-list');
             const subData = (subKey === 'IA') ? history.filter(h => h.subject === 'IA' || h.subject === 'I') : history.filter(h => h.subject === 'IIBC');
-            container.innerHTML = subData.map(h => `<div class="history-card" style="background:#fff; border:1px solid #ddd; margin-bottom:10px;"><b>${h.date} - ${h.totalScore}点</b></div>`).join('') || "履歴なし";
+            container.innerHTML = subData.map(h => `<div class="history-card" style="background:#fff; border:1px solid #ddd; margin-bottom:10px; padding:10px; border-radius:10px;"><b>${h.date} - ${h.totalScore}点</b></div>`).join('') || "履歴なし";
         });
     }
 
