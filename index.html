@@ -18,7 +18,7 @@
         * { touch-action: manipulation; -webkit-tap-highlight-color: transparent; }
         body { font-family: -apple-system, sans-serif; background: var(--bg); margin: 0; padding: 0; color: #333; overflow: hidden; font-size: 18px; }
         
-        /* 点滅アニメーションの定義 (復元) */
+        /* 点滅アニメーション */
         @keyframes blink-yellow { 0%, 100% { background: var(--bg); } 50% { background: var(--warning); } }
         @keyframes blink-red { 0%, 100% { background: var(--bg); } 50% { background: var(--danger); } }
         .warn-yellow { animation: blink-yellow 1.2s infinite !important; }
@@ -33,7 +33,21 @@
         .total-timer-area { text-align: center; padding: 15px; border-bottom: 2px solid #ddd; }
         .total-timer { font-size: 4rem; font-weight: bold; color: var(--primary); line-height: 1; }
         .scroll-content { flex-grow: 1; overflow-y: auto; padding: 20px; -webkit-overflow-scrolling: touch; }
+        
+        /* グリッドレイアウトの設定 */
         .timer-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 20px; }
+        .analysis-grid, .history-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+
+        /* スマホ向けレスポンシブ設定 (追加部分) */
+        @media screen and (max-width: 768px) {
+            .analysis-grid, .history-grid {
+                grid-template-columns: 1fr; /* 1列に強制変更 */
+            }
+            .total-timer { font-size: 3.2rem; }
+            .timer-grid { grid-template-columns: 1fr; }
+            .card { padding: 15px; }
+        }
+
         .question-card { position: relative; background: white; padding: 20px; border-radius: 15px; border: 1px solid #ddd; transition: 0.3s; }
         .question-card.active { border: 2px solid var(--primary); background: #f0f7ff; opacity: 1; }
         .question-card.completed { background: #eee; opacity: 0.8; }
@@ -48,7 +62,6 @@
         .mode-btn.active { background: var(--primary); color: white; }
         .tab { padding: 12px 16px; background: #e5e5ea; border-radius: 20px; border: none; font-size: 1rem; cursor: pointer; margin: 4px; display: inline-block; position: relative; z-index: 5; }
         .tab.active { background: var(--primary); color: white; }
-        .analysis-grid, .history-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
         .target-box { background: #eef7ff; padding: 15px; border-radius: 12px; margin-bottom: 15px; text-align: center; border: 1px solid var(--primary); }
         .target-box input { width: 80px; font-size: 1.4rem; font-weight: bold; text-align: center; }
         .eff-info { background: #fff9c4; border: 1px solid #fbc02d; padding: 15px; border-radius: 12px; margin-bottom: 20px; font-size: 0.95rem; line-height: 1.6; }
@@ -64,7 +77,9 @@
         .eff-threshold-box { font-size: 0.85rem; color: #555; background: #fffde7; padding: 8px; border-radius: 8px; border: 1px solid #fff59d; margin-bottom: 10px; line-height: 1.4; }
     </style>
 </head>
-<body id="body-bg"> <div class="container">
+<body id="body-bg">
+
+<div class="container">
     <div class="fixed-header">
         <div class="main-tabs" id="nav-tabs">
             <button class="main-tab-btn active" id="btn-setup" onclick="showView('setup')">演習設定</button>
@@ -108,12 +123,7 @@
         <div id="view-analysis" class="hidden">
             <div class="eff-info">
                 <strong>💡 効率スコアとは？</strong><br>
-                1分間あたりに何％の得点を獲得したかを示す指標です（得点率÷時間）。<br>
-                <div style="margin-top:5px; font-size:0.85rem; border-top:1px solid rgba(0,0,0,0.1); padding-top:5px;">
-                    ✅ <strong>達成：</strong> 目標点に必要な解答ペースを維持できています。<br>
-                    ⚠️ <strong>警告：</strong> やや時間がかかりすぎ、他へ影響が出る恐れがあります。<br>
-                    🚨 <strong>危険：</strong> 時間をかけすぎ、または得点が低く、目標達成が困難です。
-                </div>
+                1分間あたりに何％の得点を獲得したかを示す指標です（得点率÷時間）。
             </div>
             <div id="analysis-content-area" class="analysis-grid">
                 <div class="analysis-col">
@@ -185,7 +195,6 @@
         currentMode = mode; 
         document.getElementById('mode-toushi').classList.toggle('active', mode === 'toushi'); 
         document.getElementById('mode-tokutei').classList.toggle('active', mode === 'tokutei');
-        
         const customArea = document.getElementById('custom-time-area');
         if(mode === 'tokutei') {
             customArea.classList.remove('hidden');
@@ -218,13 +227,10 @@
         const count = document.getElementById('q-count').value;
         let totalWeight = 0;
         for(let i=1; i<=count; i++) totalWeight += parseFloat(document.getElementById(`weight-${i}`).value) || 0;
-        
         const inputMinutes = parseFloat(document.getElementById('custom-total-time').value) || 70;
         totalSeconds = inputMinutes * 60;
-
         showView('timer');
         const container = document.getElementById('timer-container'); container.innerHTML = ''; timers = [];
-        
         for(let i=0; i<count; i++) {
             const name = (toushiSelected[i+1] || ["未選択"]).join('/');
             const w = parseFloat(document.getElementById(`weight-${i+1}`).value) || 0;
@@ -244,26 +250,14 @@
         });
     }
 
-    // 点滅機能付きのtick関数 (復元)
     function tick() { 
         if(totalSeconds > 0) totalSeconds--; 
         document.getElementById('total-display').innerText = formatTime(totalSeconds); 
-        
-        // 背景の点滅制御
         const body = document.getElementById('body-bg');
         body.classList.remove('warn-yellow', 'warn-red');
-        if(totalSeconds > 0 && totalSeconds <= 60) {
-            body.classList.add('warn-red');
-        } else if(totalSeconds > 60 && totalSeconds <= 120) {
-            body.classList.add('warn-yellow');
-        }
-
-        timers.forEach((t, i) => { 
-            if(t.status === 'running') { 
-                t.elapsed++; 
-                document.getElementById(`elapsed-${i}`).innerText = formatTime(t.elapsed); 
-            } 
-        }); 
+        if(totalSeconds > 0 && totalSeconds <= 60) body.classList.add('warn-red');
+        else if(totalSeconds > 60 && totalSeconds <= 120) body.classList.add('warn-yellow');
+        timers.forEach((t, i) => { if(t.status === 'running') { t.elapsed++; document.getElementById(`elapsed-${i}`).innerText = formatTime(t.elapsed); } }); 
     }
 
     function handleFinish() { clearInterval(mainInterval); const area = document.getElementById('score-inputs-area'); area.innerHTML = ''; timers.forEach((t, i) => { area.innerHTML += `<div style="margin-bottom:15px;"><b>大問${i+1} (${t.name})</b><br>得点: <input type="number" id="s-${i}" style="width:60px;"> / ${t.weight}点</div>`; }); document.getElementById('score-modal').classList.remove('hidden'); }
@@ -273,10 +267,6 @@
         const details = [];
         for(let i=0; i<timers.length; i++){
             const s = parseFloat(document.getElementById(`s-${i}`).value) || 0;
-            if(s > timers[i].weight) {
-                alert(`大問${i+1}の得点が配点を越えています。修正してください。`);
-                return;
-            }
             currentTotal += s;
             details.push({ name: timers[i].name, elapsed: timers[i].elapsed, rate: (s/(timers[i].weight||1))*100, score: s, weight: timers[i].weight });
         }
@@ -290,7 +280,6 @@
         const history = JSON.parse(localStorage.getItem('math_timer_history') || '[]');
         ['IA', 'IIBC'].forEach(subKey => {
             const target = parseFloat(document.getElementById('target-' + subKey).value) || 70;
-            const reqEff = target / 70; 
             const content = document.getElementById('analysis-' + subKey + '-content');
             const subData = (subKey === 'IA') ? history.filter(h => h.subject === 'IA' || h.subject === 'I') : history.filter(h => h.subject === 'IIBC');
             if(subData.length === 0) { content.innerHTML = "<p>データなし</p>"; return; }
@@ -306,13 +295,6 @@
             });
             let html = `<div class="rank-title">📉 得点率ワースト</div>`;
             list.sort((a,b) => a.avgRate - b.avgRate).slice(0,3).forEach((d, i) => html += `<div class="analysis-card analysis-card-bad"><b>${i+1}位: ${d.name}</b> (${Math.round(d.avgRate)}%)</div>`);
-            html += `<div class="rank-title">⏱ 効率スコア分析</div>`;
-            html += `<div class="eff-threshold-box"><strong>目標(${target}点)に基づく判定基準:</strong><br>✅ 達成: ${reqEff.toFixed(2)} 以上<br>⚠️ 警告: ${(reqEff * 0.85).toFixed(2)} ～ ${reqEff.toFixed(2)}<br>🚨 危険: ${(reqEff * 0.85).toFixed(2)} 未満</div>`;
-            list.sort((a,b) => a.eff - b.eff).reverse().forEach(d => {
-                let status = (d.eff < reqEff * 0.85) ? "🚨 危険" : (d.eff < reqEff * 1.1) ? "⚠️ 警告" : "✅ 達成";
-                let cardClass = (d.eff < reqEff * 0.85) ? "analysis-card analysis-card-bad" : "analysis-card";
-                html += `<div class="${cardClass}"><b>${d.name}</b>: スコア <strong>${d.eff.toFixed(2)}</strong> (${status})</div>`;
-            });
             content.innerHTML = html;
         });
     }
@@ -322,16 +304,7 @@
         ['IA', 'IIBC'].forEach(subKey => {
             const container = document.getElementById('history-' + subKey + '-list');
             const subData = (subKey === 'IA') ? history.filter(h => h.subject === 'IA' || h.subject === 'I') : history.filter(h => h.subject === 'IIBC');
-            container.innerHTML = subData.map(h => {
-                let bg = 'var(--i-pink)';
-                if(h.subject === 'IA') bg = 'var(--ia-toushi)'; 
-                if(h.subject === 'IIBC') bg = 'var(--iibc-toushi)';
-                return `<div class="history-card" style="background:${bg}; color:#333">
-                    <div class="history-sub-label">${h.subject}</div>
-                    <b>${h.date} - ${h.totalScore}点</b><br>
-                    ${h.details.map(d => `・${d.name}: ${d.score}/${d.weight} (${formatTime(d.elapsed)})`).join('<br>')}
-                </div>`;
-            }).join('') || "履歴なし";
+            container.innerHTML = subData.map(h => `<div class="history-card" style="background:white; margin-bottom:10px; border:1px solid #ddd; padding:10px; border-radius:10px;"><b>${h.date} - ${h.totalScore}点</b></div>`).join('') || "履歴なし";
         });
     }
 
@@ -340,10 +313,9 @@
         ['IA', 'IIBC'].forEach(subKey => {
             const ctxElem = document.getElementById('chart-' + subKey);
             if(!ctxElem) return;
-            const ctx = ctxElem.getContext('2d');
-            const subData = (subKey === 'IA') ? history.filter(h => (h.subject === 'IA' || h.subject === 'I') && h.mode === 'toushi').slice(0, 5).reverse() : history.filter(h => h.subject === 'IIBC' && h.mode === 'toushi').slice(0, 5).reverse();
+            const subData = (subKey === 'IA') ? history.filter(h => h.mode === 'toushi').slice(0, 5).reverse() : history.filter(h => h.mode === 'toushi').slice(0, 5).reverse();
             if(charts[subKey]) charts[subKey].destroy();
-            charts[subKey] = new Chart(ctx, { type: 'bar', data: { labels: subData.map(h => h.date), datasets: [{ label: '得点推移', data: subData.map(h => h.totalScore), backgroundColor: subKey === 'IA' ? '#ffab91' : '#fff176' }] }, options: { responsive: true, maintainAspectRatio: false, scales: { y: { beginAtZero: true, max: 100 } }, plugins: { legend: { display: false } } } });
+            charts[subKey] = new Chart(ctxElem.getContext('2d'), { type: 'bar', data: { labels: subData.map(h => h.date), datasets: [{ label: '得点', data: subData.map(h => h.totalScore), backgroundColor: '#007AFF' }] }, options: { responsive: true, maintainAspectRatio: false } });
         });
     }
 
