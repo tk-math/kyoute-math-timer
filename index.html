@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>共テ数学タイマー Pro (完全復元版)</title>
+    <title>共テ数学タイマー Pro (完全復旧版)</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         :root {
@@ -17,31 +17,28 @@
         * { touch-action: manipulation; -webkit-tap-highlight-color: transparent; box-sizing: border-box; }
         body { font-family: -apple-system, sans-serif; background: var(--bg); margin: 0; padding: 0; color: #333; overflow: hidden; font-size: 18px; }
         
-        /* コンテナ設定 */
-        .container { display: flex; flex-direction: column; height: 100vh; height: -webkit-fill-available; max-width: 1200px; margin: 0 auto; }
+        .container { display: flex; flex-direction: column; height: 100vh; height: -webkit-fill-available; max-width: 1200px; margin: 0 auto; position: relative; }
         
-        /* ヘッダー固定：タイマーが絶対に見切れないように */
-        .fixed-header { flex-shrink: 0; z-index: 100; background: var(--bg); padding: 8px 15px; border-bottom: 1px solid #ddd; }
-        .main-tabs { display: flex; gap: 8px; background: #ddd; padding: 5px; border-radius: 12px; }
-        .main-tab-btn { flex: 1; padding: 12px; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; background: none; font-size: 1.1rem; }
-        .main-tab-btn.active { background: white !important; color: var(--primary); }
+        /* ヘッダー */
+        .fixed-header { flex-shrink: 0; z-index: 1000; background: var(--bg); padding: 8px 15px; border-bottom: 1px solid #ddd; position: relative; }
+        .main-tabs { display: flex; gap: 8px; background: #ddd; padding: 5px; border-radius: 12px; position: relative; z-index: 1001; }
+        .main-tab-btn { flex: 1; padding: 12px; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; background: none; font-size: 1.1rem; z-index: 1002; }
+        .main-tab-btn.active { background: white !important; color: var(--primary); box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
         
         .total-timer-area { text-align: center; padding: 5px 0; }
         .total-timer { font-size: clamp(2.5rem, 10vw, 4.5rem); font-weight: bold; color: var(--primary); line-height: 1; margin: 0; }
         
-        /* 点滅アニメーション */
+        /* 点滅 */
         @keyframes blink-yellow { 0%, 100% { background: var(--bg); } 50% { background: var(--warning); } }
         @keyframes blink-red { 0%, 100% { background: var(--bg); } 50% { background: var(--danger); } }
-        .warn-yellow { animation: blink-yellow 1.2s infinite; }
-        .warn-red { animation: blink-red 0.7s infinite; }
+        .warn-yellow { animation: blink-yellow 1.2s infinite !important; }
+        .warn-red { animation: blink-red 0.7s infinite !important; }
 
-        /* スクロールエリア：ボタンが隠れないよう下部余白を大きく確保 */
         .scroll-content { flex: 1; overflow-y: auto; padding: 15px; -webkit-overflow-scrolling: touch; padding-bottom: 120px; }
         
         .card { background: var(--card-bg); padding: 15px; border-radius: 15px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); margin-bottom: 12px; }
         .question-card { position: relative; background: white; padding: 15px; border-radius: 15px; border: 1px solid #ddd; }
         .question-card.active { border: 3px solid var(--primary); background: #f0f7ff; }
-        .done-overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; display: flex; justify-content: center; align-items: center; font-size: 3rem; font-weight: bold; color: rgba(0,0,0,0.2); pointer-events: none; z-index: 1; }
         
         .btn { padding: 15px; border-radius: 10px; border: none; font-weight: bold; cursor: pointer; font-size: 1.1rem; }
         .btn-start { background: var(--primary); color: white; }
@@ -52,33 +49,37 @@
         .tab { padding: 8px 12px; background: #e5e5ea; border-radius: 20px; border: none; font-size: 0.9rem; cursor: pointer; margin: 3px; display: inline-block; }
         .tab.active { background: var(--primary); color: white; }
         
-        /* 効率スコア・分析用スタイル */
-        .eff-info { background: #fff9c4; border: 1px solid #fbc02d; padding: 15px; border-radius: 12px; margin-bottom: 15px; font-size: 0.9rem; line-height: 1.5; color: #5d4037; }
-        .analysis-card { background: var(--bg-success); border-radius: 10px; padding: 12px; margin-bottom: 10px; font-size: 0.95rem; border: 1px solid #c3e6cb; }
+        /* 分析表示 */
+        .eff-info { background: #fff9c4; border: 1px solid #fbc02d; padding: 12px; border-radius: 12px; margin-bottom: 15px; font-size: 0.85rem; }
+        .analysis-card { background: var(--bg-success); border-radius: 10px; padding: 12px; margin-bottom: 8px; border: 1px solid #c3e6cb; }
         .analysis-card-bad { background: var(--bg-danger); border: 1px solid #f5c6cb; }
+        .worst-card { background: #333; color: white; padding: 12px; border-radius: 10px; margin-bottom: 5px; font-size: 0.9rem; }
         .target-box { background: #eef7ff; padding: 10px; border-radius: 12px; margin-bottom: 10px; text-align: center; border: 1px solid var(--primary); }
+        
+        .hidden { display: none !important; }
+        .modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); display: flex; justify-content: center; align-items: center; z-index: 2000; }
+        .modal-content { background: white; padding: 25px; border-radius: 20px; width: 90%; max-width: 500px; max-height: 85vh; overflow-y: auto; }
     </style>
 </head>
 <body id="body-bg">
 
 <div class="container">
     <div class="fixed-header">
-        <div class="main-tabs" id="nav-tabs">
+        <div class="main-tabs">
             <button class="main-tab-btn active" id="btn-setup" onclick="showView('setup')">演習設定</button>
             <button class="main-tab-btn" id="btn-analysis" onclick="showView('analysis')">弱点分析</button>
             <button class="main-tab-btn" id="btn-history" onclick="showView('history')">履歴</button>
         </div>
         <div id="active-timer-header" class="total-timer-area hidden">
             <div id="total-display" class="total-timer">70:00</div>
-            <div id="status-msg" style="font-size:0.8rem; color:#d93025; font-weight:bold;">大問を選んで開始を押してください。</div>
-            <button class="btn" style="background:#666; color:white; padding:4px 12px; font-size:0.75rem; margin-top:2px;" onclick="location.reload()">設定に戻る</button>
+            <button class="btn" style="background:#666; color:white; padding:4px 12px; font-size:0.75rem; margin-top:2px;" onclick="location.reload()">終了して戻る</button>
         </div>
     </div>
 
     <div class="scroll-content">
         <div id="view-setup">
             <div class="card">
-                <h3 style="margin:0 0 10px 0">科目 / モード</h3>
+                <h3>科目 / モード</h3>
                 <div style="display:flex; gap:8px; margin-bottom:10px">
                     <button id="sub-I" class="mode-btn" onclick="setSubject('I')">数学Ⅰ</button>
                     <button id="sub-IA" class="mode-btn active" onclick="setSubject('IA')">数学Ⅰ・A</button>
@@ -91,8 +92,8 @@
                 <div id="time-setting-area" style="margin-bottom:15px; background: #eef7ff; padding: 10px; border-radius: 10px; border: 1px solid #007AFF;">
                     演習時間: <input type="number" id="custom-time" style="width:70px; font-size:1.2rem; text-align: center;" value="70"> 分
                 </div>
-                <div style="margin-bottom:15px">大問数：<input type="number" id="q-count" style="width:60px; font-size:1.2rem;" value="4" onchange="renderToushiFields()"></div>
-                <div id="toushi-fields"></div>
+                <div>大問数：<input type="number" id="q-count" style="width:60px; font-size:1.2rem;" value="4" onchange="renderToushiFields()"></div>
+                <div id="toushi-fields" style="margin-top:10px;"></div>
                 <button class="btn btn-start" style="width:100%; height:75px; font-size:1.5rem; margin-top:25px;" onclick="initTimer()">演習開始</button>
             </div>
         </div>
@@ -103,31 +104,22 @@
         </div>
 
         <div id="view-analysis" class="hidden">
-            <div class="eff-info">
-                <strong>💡 効率スコア（得点効率）の考え方</strong><br>
-                「得点率(%) ÷ 費やした時間(分)」で算出します。<br>
-                数値が高いほど、短時間で効率よく得点できている得意単元です。<br>
-                目標スコアを下回る単元は、時間配分の見直しや重点的な復習が必要です。
-            </div>
-            <div id="analysis-content-area" style="display: grid; grid-template-columns: 1fr; gap: 15px;">
+            <div class="eff-info">💡 <strong>効率スコア:</strong> 得点率(%)÷時間。目標点数が高いほど、必要な効率の基準も上がります。</div>
+            <div id="analysis-content-area">
                 <div class="card">
-                    <h2>数学Ⅰ/IA 分析</h2>
-                    <div class="target-box">🎯 目標点数: <input type="number" id="target-IA" value="70" onchange="runAnalysis()"> 点</div>
-                    <div id="analysis-IA-content"></div>
+                    <h3 style="margin-top:0">📉 得点率ワーストランキング</h3>
+                    <div id="worst-ranking-content"></div>
                 </div>
                 <div class="card">
-                    <h2>数学ⅡBC 分析</h2>
-                    <div class="target-box">🎯 目標点数: <input type="number" id="target-IIBC" value="70" onchange="runAnalysis()"> 点</div>
-                    <div id="analysis-IIBC-content"></div>
+                    <h3>🔍 単元別効率分析</h3>
+                    <div class="target-box">目標点数: <input type="number" id="target-score" value="70" onchange="runAnalysis()"> 点 / 70分</div>
+                    <div id="efficiency-content"></div>
                 </div>
             </div>
         </div>
 
         <div id="view-history" class="hidden">
-            <div id="history-content" style="display: grid; grid-template-columns: 1fr; gap: 15px;">
-                <div class="card"><h3>数学Ⅰ/IA 履歴</h3><div id="history-IA-list"></div></div>
-                <div class="card"><h3>数学ⅡBC 履歴</h3><div id="history-IIBC-list"></div></div>
-            </div>
+            <div id="history-list"></div>
         </div>
     </div>
 </div>
@@ -135,7 +127,6 @@
 <div id="score-modal" class="modal hidden"><div class="modal-content"><h3>得点入力</h3><div id="score-inputs-area"></div><button class="btn btn-start" style="width:100%; margin-top:15px;" onclick="finalSave()">保存</button></div></div>
 
 <script>
-    // ロジック部分は全て維持・復元
     const topicsData = {
         'I': ["数と式", "集合と命題", "二次関数", "図形と計量", "データの分析"],
         'IA': ["数と式", "集合と命題", "二次関数", "三角比", "場合の数", "確率", "図形の性質", "データの分析"],
@@ -143,19 +134,36 @@
     };
     let currentSubject = 'IA', currentMode = 'toushi', timers = [], totalSeconds = 70 * 60, mainInterval, toushiSelected = {};
 
+    // ビューの切り替え修正
     function showView(view) {
-        ['setup','timer','analysis','history'].forEach(v => document.getElementById('view-'+v)?.classList.add('hidden'));
-        document.getElementById('view-'+view).classList.remove('hidden');
+        document.getElementById('view-setup').classList.add('hidden');
+        document.getElementById('view-timer').classList.add('hidden');
+        document.getElementById('view-analysis').classList.add('hidden');
+        document.getElementById('view-history').classList.add('hidden');
+        
+        document.getElementById('view-' + view).classList.remove('hidden');
+        
         document.querySelectorAll('.main-tab-btn').forEach(btn => btn.classList.remove('active'));
-        if(document.getElementById('btn-' + view)) document.getElementById('btn-' + view).classList.add('active');
-        document.getElementById('nav-tabs').classList.toggle('hidden', view === 'timer');
+        if(view === 'setup') document.getElementById('btn-setup').classList.add('active');
+        if(view === 'analysis') { document.getElementById('btn-analysis').classList.add('active'); runAnalysis(); }
+        if(view === 'history') { document.getElementById('btn-history').classList.add('active'); loadHistory(); }
+        
+        document.querySelector('.main-tabs').classList.toggle('hidden', view === 'timer');
         document.getElementById('active-timer-header').classList.toggle('hidden', view !== 'timer');
-        if(view === 'analysis') runAnalysis();
-        if(view === 'history') loadHistory();
     }
 
-    function setSubject(sub) { currentSubject = sub; renderToushiFields(); }
-    function setMode(mode) { currentMode = mode; if(mode === 'toushi') document.getElementById('custom-time').value = 70; }
+    function setSubject(sub) { 
+        currentSubject = sub; 
+        ['I','IA','IIBC'].forEach(s => document.getElementById('sub-'+s).classList.toggle('active', s===sub));
+        renderToushiFields(); 
+    }
+    
+    function setMode(mode) { 
+        currentMode = mode; 
+        document.getElementById('mode-toushi').classList.toggle('active', mode==='toushi');
+        document.getElementById('mode-tokutei').classList.toggle('active', mode==='tokutei');
+        if(mode==='toushi') document.getElementById('custom-time').value = 70;
+    }
 
     function renderToushiFields() {
         const count = document.getElementById('q-count').value;
@@ -172,8 +180,13 @@
 
     function toggleToushiTopic(btn, qNum, topic) {
         if(!toushiSelected[qNum]) toushiSelected[qNum] = [];
-        if(toushiSelected[qNum].includes(topic)) { toushiSelected[qNum] = toushiSelected[qNum].filter(t => t !== topic); btn.classList.remove('active'); }
-        else if(toushiSelected[qNum].length < 2) { toushiSelected[qNum].push(topic); btn.classList.add('active'); }
+        if(toushiSelected[qNum].includes(topic)) {
+            toushiSelected[qNum] = toushiSelected[qNum].filter(t => t !== topic);
+            btn.classList.remove('active');
+        } else if(toushiSelected[qNum].length < 2) {
+            toushiSelected[qNum].push(topic);
+            btn.classList.add('active');
+        }
     }
 
     function initTimer() {
@@ -189,14 +202,22 @@
             const w = parseFloat(document.getElementById(`weight-${i+1}`).value) || 0;
             const allocated = Math.floor(totalSeconds * (w / (totalWeight || 1)));
             timers.push({ name, target: allocated, elapsed: 0, status: 'idle', weight: w });
-            container.innerHTML += `<div class="question-card" id="card-${i}"><div id="overlay-${i}" class="done-overlay hidden">済</div><h3>大問 ${i+1} (${w}点)</h3><p>${name}</p><div>目標: ${formatTime(allocated)} / 経過: <span id="elapsed-${i}">0:00</span></div><div style="display:flex; gap:10px; margin-top:10px;"><button class="btn btn-start" style="flex:1" onclick="control(${i},'start')">開始</button><button class="btn btn-complete" style="flex:1" onclick="control(${i},'complete')">完了</button></div></div>`;
+            container.innerHTML += `<div class="question-card" id="card-${i}"><div id="overlay-${i}" style="position:absolute; top:0; left:0; width:100%; height:100%; display:none; justify-content:center; align-items:center; font-size:2.5rem; background:rgba(255,255,255,0.6); font-weight:bold; color:#666;">済</div><h3>大問 ${i+1} (${w}点)</h3><p>${name}</p><div>目標: ${formatTime(allocated)} / 経過: <span id="elapsed-${i}">0:00</span></div><div style="display:flex; gap:10px; margin-top:10px;"><button class="btn btn-start" style="flex:1" onclick="control(${i},'start')">開始</button><button class="btn btn-complete" style="flex:1" onclick="control(${i},'complete')">完了</button></div></div>`;
         }
         mainInterval = setInterval(tick, 1000);
     }
 
     function control(idx, action) {
-        if(action === 'complete') { timers[idx].status = 'completed'; document.getElementById(`card-${idx}`).classList.add('completed'); document.getElementById(`overlay-${idx}`).classList.remove('hidden'); return; }
-        timers.forEach((t, i) => { t.status = (i === idx) ? 'running' : 'idle'; document.getElementById(`card-${i}`).classList.toggle('active', i === idx); });
+        if(action === 'complete') {
+            timers[idx].status = 'completed';
+            document.getElementById(`card-${idx}`).classList.remove('active');
+            document.getElementById(`overlay-${idx}`).style.display = 'flex';
+            return;
+        }
+        timers.forEach((t, i) => {
+            t.status = (i === idx) ? 'running' : 'idle';
+            document.getElementById(`card-${i}`).classList.toggle('active', i === idx);
+        });
     }
 
     function tick() {
@@ -212,7 +233,7 @@
     function handleFinish() { 
         clearInterval(mainInterval); 
         const area = document.getElementById('score-inputs-area'); area.innerHTML = ''; 
-        timers.forEach((t, i) => { area.innerHTML += `<div>大問${i+1} 得点: <input type="number" id="s-${i}" style="width:60px;"> / ${t.weight}</div>`; }); 
+        timers.forEach((t, i) => { area.innerHTML += `<div style="margin-bottom:8px">大問${i+1}(${t.name}) : <input type="number" id="s-${i}" style="width:60px;"> / ${t.weight}</div>`; }); 
         document.getElementById('score-modal').classList.remove('hidden'); 
     }
 
@@ -221,7 +242,7 @@
         const details = timers.map((t, i) => {
             const s = parseFloat(document.getElementById(`s-${i}`).value) || 0;
             totalScore += s;
-            return { name: t.name, elapsed: t.elapsed, rate: (s/t.weight)*100, score: s, weight: t.weight };
+            return { name: t.name, elapsed: t.elapsed, rate: (s/(t.weight||1))*100, score: s, weight: t.weight };
         });
         const history = JSON.parse(localStorage.getItem('math_timer_history') || '[]');
         history.unshift({ date: new Date().toLocaleDateString(), subject: currentSubject, mode: currentMode, details, totalScore });
@@ -231,40 +252,53 @@
 
     function runAnalysis() {
         const history = JSON.parse(localStorage.getItem('math_timer_history') || '[]');
-        ['IA', 'IIBC'].forEach(subKey => {
-            const target = parseFloat(document.getElementById('target-' + subKey).value) || 70;
-            const reqEff = target / 70; // 目標とする1分あたりの得点期待値
-            const content = document.getElementById('analysis-' + subKey + '-content');
-            const subData = history.filter(h => subKey === 'IA' ? (h.subject === 'IA' || h.subject === 'I') : h.subject === 'IIBC');
-            if(subData.length === 0) { content.innerHTML = "履歴がありません"; return; }
-            let stats = {};
-            subData.forEach(h => h.details.forEach(d => {
-                if(!stats[d.name]) stats[d.name] = { totalRate: 0, totalTime: 0, count: 0 };
-                stats[d.name].totalRate += d.rate; stats[d.name].totalTime += d.elapsed; stats[d.name].count++;
-            }));
-            let html = '';
-            Object.keys(stats).forEach(name => {
-                const avgRate = stats[name].totalRate / stats[name].count;
-                const avgTimeMin = (stats[name].totalTime / stats[name].count) / 60;
-                const eff = avgRate / (avgTimeMin || 1);
-                let status = (eff < reqEff * 0.8) ? "🚨 要改善" : (eff < reqEff) ? "⚠️ あと少し" : "✅ 良好";
-                let cardClass = (eff < reqEff * 0.8) ? "analysis-card analysis-card-bad" : "analysis-card";
-                html += `<div class="${cardClass}"><b>${name}</b><br>効率: ${eff.toFixed(2)} (${status})</div>`;
-            });
-            content.innerHTML = html;
+        if(history.length === 0) return;
+
+        const targetScore = parseFloat(document.getElementById('target-score').value) || 70;
+        const requiredEff = targetScore / 70; // 70分での目標点数から必要な「1分あたりの得点率期待値」を計算
+
+        let stats = {};
+        history.forEach(h => h.details.forEach(d => {
+            if(!stats[d.name]) stats[d.name] = { totalRate: 0, totalTime: 0, count: 0 };
+            stats[d.name].totalRate += d.rate; stats[d.name].totalTime += d.elapsed; stats[d.name].count++;
+        }));
+
+        let list = Object.keys(stats).map(name => {
+            const avgRate = stats[name].totalRate / stats[name].count;
+            const avgTimeMin = (stats[name].totalTime / stats[name].count) / 60;
+            return { name, avgRate, eff: avgRate / (avgTimeMin || 1) };
         });
+
+        // 1. 得点率ワーストランキング (復活)
+        const worstHtml = list.sort((a,b) => a.avgRate - b.avgRate).slice(0,3).map((d, i) => 
+            `<div class="worst-card">第${i+1}位: <b>${d.name}</b> (平均得点率: ${Math.round(d.avgRate)}%)</div>`
+        ).join('');
+        document.getElementById('worst-ranking-content').innerHTML = worstHtml || "データなし";
+
+        // 2. 目標連動型 効率分析 (復活・修正)
+        const effHtml = list.sort((a,b) => b.eff - a.eff).map(d => {
+            const status = (d.eff < requiredEff * 0.8) ? "🚨 要改善" : (d.eff < requiredEff) ? "⚠️ 目標未達" : "✅ 良好";
+            const cardClass = (d.eff < requiredEff * 0.8) ? "analysis-card analysis-card-bad" : "analysis-card";
+            return `<div class="${cardClass}"><b>${d.name}</b><br>効率: ${d.eff.toFixed(2)} (判定: ${status})</div>`;
+        }).join('');
+        document.getElementById('efficiency-content').innerHTML = effHtml || "データなし";
     }
 
     function loadHistory() {
         const history = JSON.parse(localStorage.getItem('math_timer_history') || '[]');
-        ['IA', 'IIBC'].forEach(subKey => {
-            const container = document.getElementById('history-' + subKey + '-list');
-            const subData = history.filter(h => subKey === 'IA' ? (h.subject === 'IA' || h.subject === 'I') : h.subject === 'IIBC');
-            container.innerHTML = subData.map(h => `<div><b>${h.date}</b>: ${h.totalScore}点</div>`).join('') || "履歴なし";
-        });
+        document.getElementById('history-list').innerHTML = history.map(h => `
+            <div class="card">
+                <b>${h.date} - ${h.subject} (${h.totalScore}点)</b><br>
+                <div style="font-size:0.8rem; margin-top:5px;">
+                    ${h.details.map(d => `・${d.name}: ${Math.round(d.rate)}% (${formatTime(d.elapsed)})`).join('<br>')}
+                </div>
+            </div>
+        `).join('') || "履歴なし";
     }
 
     function formatTime(s) { const m = Math.floor(Math.abs(s)/60); const sc = Math.abs(s)%60; return (s<0?"-":"")+m+":"+sc.toString().padStart(2,'0'); }
+    
+    // 初期化
     renderToushiFields();
 </script>
 </body>
